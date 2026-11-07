@@ -241,19 +241,33 @@
 
         // State Management
         let currentEvent = 'pernikahan'; // 'pernikahan' or 'anak'
+        const storageKey = 'bukuTamuData';
         
-        const eventData = {
-            'pernikahan': [
-                { id: 1, name: "Andi Wijaya", alamat: "Jl. Merdeka No. 45, Bandung", sumbangan: 150000, timestamp: Date.now() - 10000 },
-                { id: 2, name: "Bapak Supriyanto & Istri", alamat: "Perum Indah Blok B/2, Jakarta", sumbangan: 500000, timestamp: Date.now() - 20000 }
-            ],
-            'anak': [
-                { id: 3, name: "Tante Sisca", alamat: "Jl. Anggrek 1", sumbangan: 200000, timestamp: Date.now() - 5000 }
-            ]
+        // Data dimulai dalam keadaan kosong
+        let eventData = {
+            'pernikahan': [],
+            'anak': []
         };
+
+        // Memuat data dari localStorage jika sebelumnya sudah ada
+        const savedData = localStorage.getItem(storageKey);
+        if (savedData) {
+            try {
+                const parsedData = JSON.parse(savedData);
+                if (parsedData.pernikahan) eventData.pernikahan = parsedData.pernikahan;
+                if (parsedData.anak) eventData.anak = parsedData.anak;
+            } catch (e) {
+                console.error("Gagal membaca local storage", e);
+            }
+        }
 
         function getActiveGuests() {
             return eventData[currentEvent];
+        }
+
+        // Fungsi penyimpan ke LocalStorage
+        function saveData() {
+            localStorage.setItem(storageKey, JSON.stringify(eventData));
         }
 
         // DOM Elements
@@ -320,7 +334,10 @@
                 emptyState.classList.remove('flex');
                 tableBody.parentElement.classList.remove('hidden'); // show table
 
+                let currentTotal = 0;
+
                 filteredGuests.forEach((guest, index) => {
+                    currentTotal += Number(guest.sumbangan);
                     const tr = document.createElement('tr');
                     tr.className = 'hover:bg-wedding-50/50 transition-colors group';
                     
@@ -330,7 +347,7 @@
                         <td class="py-4 px-6 text-stone-600">${guest.alamat}</td>
                         <td class="py-4 px-6 font-semibold text-emerald-600">${formatRupiah(guest.sumbangan)}</td>
                         <td class="py-4 px-6 text-center">
-                            <button onclick="deleteGuest(${guest.id}, '${guest.name}')" 
+                            <button onclick="deleteGuest(${guest.id}, '${guest.name.replace(/'/g, "\\'")}')" 
                                 class="text-stone-400 hover:text-rose-600 transition-colors p-2 rounded-full hover:bg-rose-50 focus:outline-none"
                                 title="Hapus Data">
                                 <i class="fa-solid fa-trash-can"></i>
@@ -339,6 +356,15 @@
                     `;
                     tableBody.appendChild(tr);
                 });
+
+                // Menambahkan baris Total Nominal di paling bawah tabel
+                const totalTr = document.createElement('tr');
+                totalTr.className = 'bg-stone-50 border-t-2 border-stone-200 font-bold';
+                totalTr.innerHTML = `
+                    <td colspan="3" class="py-4 px-6 text-right text-stone-700 uppercase tracking-wider text-sm">Total Keseluruhan:</td>
+                    <td colspan="2" class="py-4 px-6 text-emerald-700 text-base">${formatRupiah(currentTotal)}</td>
+                `;
+                tableBody.appendChild(totalTr);
             }
             
             updateStats();
@@ -435,46 +461,77 @@
                     const firstSheetName = workbook.SheetNames[0];
                     const worksheet = workbook.Sheets[firstSheetName];
                     
-                    // Konversi sheet menjadi format JSON
-                    const jsonData = XLSX.utils.sheet_to_json(worksheet);
+                    // Gunakan mode header: 1 untuk mendapatkan array of arrays
+                    // Ini sangat ampuh untuk melewati baris judul yang kosong di atas tabel
+                    const rows = XLSX.utils.sheet_to_json(worksheet, {header: 1});
                     
                     let importCount = 0;
-                    
-                    jsonData.forEach((row) => {
-                        // Abaikan baris total saat mengimpor
-                        if (row["ALAMAT"] === "TOTAL KESELURUHAN" || row["Alamat"] === "TOTAL KESELURUHAN") return;
+                    let headerRowIndex = -1;
+                    let colName = -1, colAlamat = -1, colNominal = -1;
 
-                        // Deteksi nama kolom yang mungkin ada (fleksibel)
-                        const name = row["NAMA"] || row["Nama"] || row["nama"] || "";
-                        const alamat = row["ALAMAT"] || row["Alamat"] || row["alamat"] || "";
-                        const nominalRaw = row["NOMINAL"] || row["Nominal"] || row["nominal"] || row["Sumbangan (Rp)"] || 0;
+                    // 1. Cari baris yang merupakan header tabel (mengandung NAMA, ALAMAT, NOMINAL)
+                    for (let i = 0; i < rows.length; i++) {
+                        const row = rows[i];
+                        if (!Array.isArray(row)) continue;
                         
-                        let sumbangan = 0;
-                        if (typeof nominalRaw === 'number') {
-                            sumbangan = nominalRaw;
-                        } else if (typeof nominalRaw === 'string') {
-                            // Hapus karakter non-angka jika di format string "Rp 100.000"
-                            sumbangan = parseInt(nominalRaw.replace(/[^0-9]/g, ''), 10) || 0;
+                        for (let j = 0; j < row.length; j++) {
+                            const cellValue = String(row[j] || '').trim().toUpperCase();
+                            if (cellValue === 'NAMA') colName = j;
+                            if (cellValue === 'ALAMAT') colAlamat = j;
+                            if (cellValue === 'NOMINAL') colNominal = j;
                         }
 
-                        // Hanya masukkan jika ada nama & alamat
-                        if (name && alamat) {
-                            eventData[currentEvent].push({
-                                id: Date.now() + Math.random(), // Unique ID untuk mencegah bentrok
-                                name: String(name),
-                                alamat: String(alamat),
-                                sumbangan: sumbangan,
-                                timestamp: Date.now()
-                            });
-                            importCount++;
+                        // Jika menemukan kolom NAMA, anggap baris ini adalah header tabel
+                        if (colName !== -1) {
+                            headerRowIndex = i;
+                            break;
                         }
-                    });
+                    }
+
+                    // 2. Ekstrak data jika header ditemukan
+                    if (headerRowIndex !== -1) {
+                        for (let i = headerRowIndex + 1; i < rows.length; i++) {
+                            const row = rows[i];
+                            if (!Array.isArray(row) || row.length === 0) continue;
+
+                            const name = row[colName] ? String(row[colName]).trim() : "";
+                            const alamat = colAlamat !== -1 && row[colAlamat] ? String(row[colAlamat]).trim() : "";
+                            const nominalRaw = colNominal !== -1 ? row[colNominal] : 0;
+
+                            // Abaikan baris total keseluruhan
+                            if (alamat.toUpperCase() === "TOTAL KESELURUHAN" || name.toUpperCase() === "TOTAL KESELURUHAN") continue;
+
+                            let sumbangan = 0;
+                            if (typeof nominalRaw === 'number') {
+                                sumbangan = nominalRaw;
+                            } else if (typeof nominalRaw === 'string') {
+                                // Ekstrak hanya angka saja dengan parseInt/Number
+                                sumbangan = parseInt(nominalRaw.replace(/[^0-9]/g, ''), 10) || 0;
+                            }
+
+                            // Hanya masukkan jika ada nama (baris tidak kosong)
+                            if (name) {
+                                eventData[currentEvent].push({
+                                    id: Date.now() + Math.random(), // Unique ID 
+                                    name: name,
+                                    alamat: alamat,
+                                    sumbangan: sumbangan,
+                                    timestamp: Date.now()
+                                });
+                                importCount++;
+                            }
+                        }
+                    }
+
+                    if (importCount > 0) {
+                        saveData(); // Simpan hasil import ke local storage
+                    }
 
                     renderTable(searchInput.value);
                     if (importCount > 0) {
                         showToast(`Berhasil mengimpor ${importCount} tamu!`, "success");
                     } else {
-                        showToast("Tidak ada data tamu yang sesuai format ditemukan.", "error");
+                        showToast("Format tabel tidak ditemukan atau data kosong.", "error");
                     }
                 } catch (error) {
                     console.error("Error importing file:", error);
@@ -508,6 +565,7 @@
 
             // Tambahkan ke array yang sedang aktif
             eventData[currentEvent].push(newGuest);
+            saveData(); // Simpan ke local storage
             renderTable(searchInput.value);
             
             // Reset form
@@ -523,6 +581,7 @@
         // Global function for inline onclick handler
         window.deleteGuest = function(id, name) {
             eventData[currentEvent] = eventData[currentEvent].filter(g => g.id !== id);
+            saveData(); // Simpan ke local storage setelah dihapus
             renderTable(searchInput.value);
             showToast(`${name} telah dihapus dari daftar.`, 'error');
         };
