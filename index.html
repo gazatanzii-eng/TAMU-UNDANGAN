@@ -188,6 +188,9 @@
                                 <button onclick="exportToExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-full text-sm font-medium transition-colors shadow-sm flex items-center justify-center whitespace-nowrap">
                                     <i class="fa-solid fa-file-excel mr-2"></i> Export Excel
                                 </button>
+                                <button onclick="deleteAllGuests()" class="bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded-full text-sm font-medium transition-colors shadow-sm flex items-center justify-center whitespace-nowrap">
+                                    <i class="fa-solid fa-trash-can mr-2"></i> Hapus Semua
+                                </button>
                             </div>
                         </div>
 
@@ -227,6 +230,18 @@
 
     <!-- Toast Notification Container -->
     <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-3"></div>
+
+    <!-- Confirm Modal -->
+    <div id="confirmModal" class="fixed inset-0 z-50 hidden bg-stone-900/50 flex items-center justify-center backdrop-blur-sm transition-opacity opacity-0 duration-200">
+        <div class="bg-white rounded-2xl shadow-xl p-6 max-w-md w-full mx-4 transform scale-95 transition-transform duration-200">
+            <h3 class="text-xl font-bold text-stone-900 mb-2">Hapus Semua Data?</h3>
+            <p class="text-stone-500 mb-6">Apakah Anda yakin ingin menghapus SEMUA data daftar hadir? Tindakan ini tidak dapat dibatalkan.</p>
+            <div class="flex justify-end space-x-3">
+                <button onclick="closeConfirmModal()" class="px-4 py-2 text-stone-600 bg-stone-100 hover:bg-stone-200 rounded-lg font-medium transition-colors">Batal</button>
+                <button onclick="executeDeleteAll()" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg font-medium transition-colors">Ya, Hapus Semua</button>
+            </div>
+        </div>
+    </div>
 
     <script>
         // Formatter untuk Rupiah
@@ -584,6 +599,37 @@
             saveData(); // Simpan ke local storage setelah dihapus
             renderTable(searchInput.value);
             showToast(`${name} telah dihapus dari daftar.`, 'error');
+        };
+
+        window.deleteAllGuests = function() {
+            const activeGuests = getActiveGuests();
+            if (activeGuests.length === 0) {
+                showToast("Tidak ada data untuk dihapus.", 'error');
+                return;
+            }
+            const modal = document.getElementById('confirmModal');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modal.querySelector('div').classList.remove('scale-95');
+            }, 10);
+        };
+
+        window.closeConfirmModal = function() {
+            const modal = document.getElementById('confirmModal');
+            modal.classList.add('opacity-0');
+            modal.querySelector('div').classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 200);
+        };
+
+        window.executeDeleteAll = function() {
+            eventData[currentEvent] = [];
+            saveData();
+            renderTable(searchInput.value);
+            closeConfirmModal();
+            showToast("Semua data berhasil dihapus.", 'success');
         };
         
     </script>
