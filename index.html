@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Buku Tamu Pernikahan</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script>
@@ -181,6 +181,10 @@
                                     <input type="text" id="searchInput" placeholder="Cari nama / alamat..." 
                                         class="w-full pl-10 pr-4 py-2 rounded-full border border-stone-200 focus:ring-2 focus:ring-wedding-400 focus:border-wedding-400 outline-none text-sm bg-white shadow-inner">
                                 </div>
+                                <input type="file" id="excelFileInput" accept=".xlsx, .xls" class="hidden" onchange="handleImport(event)">
+                                <button onclick="document.getElementById('excelFileInput').click()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-full text-sm font-medium transition-colors shadow-sm flex items-center justify-center whitespace-nowrap">
+                                    <i class="fa-solid fa-file-import mr-2"></i> Import Excel
+                                </button>
                                 <button onclick="exportToExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-full text-sm font-medium transition-colors shadow-sm flex items-center justify-center whitespace-nowrap">
                                     <i class="fa-solid fa-file-excel mr-2"></i> Export Excel
                                 </button>
@@ -192,10 +196,10 @@
                             <table class="w-full text-left border-collapse">
                                 <thead>
                                     <tr class="bg-stone-50 text-stone-500 text-xs uppercase tracking-wider border-b border-stone-200">
-                                        <th class="py-4 px-6 font-semibold w-12 text-center">No</th>
-                                        <th class="py-4 px-6 font-semibold">Nama Lengkap</th>
-                                        <th class="py-4 px-6 font-semibold">Alamat</th>
-                                        <th class="py-4 px-6 font-semibold">Sumbangan</th>
+                                        <th class="py-4 px-6 font-semibold w-12 text-center">No.</th>
+                                        <th class="py-4 px-6 font-semibold">NAMA</th>
+                                        <th class="py-4 px-6 font-semibold">ALAMAT</th>
+                                        <th class="py-4 px-6 font-semibold">NOMINAL</th>
                                         <th class="py-4 px-6 font-semibold text-center">Aksi</th>
                                     </tr>
                                 </thead>
@@ -377,20 +381,20 @@
             // Hitung total sumbangan
             const totalSumbangan = activeGuests.reduce((sum, guest) => sum + Number(guest.sumbangan), 0);
 
-            // Siapkan data untuk excel
+            // Siapkan data untuk excel dengan format yang diinginkan
             const exportData = activeGuests.map((guest, index) => ({
-                "No": index + 1,
-                "Nama Lengkap": guest.name,
-                "Alamat Lengkap": guest.alamat,
-                "Sumbangan (Rp)": guest.sumbangan
+                "No.": index + 1,
+                "NAMA": guest.name,
+                "ALAMAT": guest.alamat,
+                "NOMINAL": guest.sumbangan
             }));
 
             // Tambahkan baris Total di paling bawah
             exportData.push({
-                "No": "",
-                "Nama Lengkap": "",
-                "Alamat Lengkap": "TOTAL KESELURUHAN",
-                "Sumbangan (Rp)": totalSumbangan
+                "No.": "",
+                "NAMA": "",
+                "ALAMAT": "TOTAL KESELURUHAN",
+                "NOMINAL": totalSumbangan
             });
 
             // Buat worksheet dan workbook
@@ -398,10 +402,10 @@
             
             // Atur lebar kolom agar rapi (!cols)
             ws['!cols'] = [
-                { wch: 5 },   // Lebar kolom A (No)
-                { wch: 25 },  // Lebar kolom B (Nama)
-                { wch: 40 },  // Lebar kolom C (Alamat)
-                { wch: 20 }   // Lebar kolom D (Sumbangan)
+                { wch: 5 },   // Lebar kolom A (No.)
+                { wch: 30 },  // Lebar kolom B (Nama)
+                { wch: 50 },  // Lebar kolom C (Alamat)
+                { wch: 20 }   // Lebar kolom D (Nominal)
             ];
 
             const wb = XLSX.utils.book_new();
@@ -414,6 +418,74 @@
             // Simpan file
             XLSX.writeFile(wb, fileName);
             showToast(`Berhasil mendownload ${fileName}!`, "success");
+        }
+
+        // Fungsi untuk Import File Excel
+        function handleImport(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, {type: 'array'});
+                    
+                    // Ambil sheet pertama
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    
+                    // Konversi sheet menjadi format JSON
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet);
+                    
+                    let importCount = 0;
+                    
+                    jsonData.forEach((row) => {
+                        // Abaikan baris total saat mengimpor
+                        if (row["ALAMAT"] === "TOTAL KESELURUHAN" || row["Alamat"] === "TOTAL KESELURUHAN") return;
+
+                        // Deteksi nama kolom yang mungkin ada (fleksibel)
+                        const name = row["NAMA"] || row["Nama"] || row["nama"] || "";
+                        const alamat = row["ALAMAT"] || row["Alamat"] || row["alamat"] || "";
+                        const nominalRaw = row["NOMINAL"] || row["Nominal"] || row["nominal"] || row["Sumbangan (Rp)"] || 0;
+                        
+                        let sumbangan = 0;
+                        if (typeof nominalRaw === 'number') {
+                            sumbangan = nominalRaw;
+                        } else if (typeof nominalRaw === 'string') {
+                            // Hapus karakter non-angka jika di format string "Rp 100.000"
+                            sumbangan = parseInt(nominalRaw.replace(/[^0-9]/g, ''), 10) || 0;
+                        }
+
+                        // Hanya masukkan jika ada nama & alamat
+                        if (name && alamat) {
+                            eventData[currentEvent].push({
+                                id: Date.now() + Math.random(), // Unique ID untuk mencegah bentrok
+                                name: String(name),
+                                alamat: String(alamat),
+                                sumbangan: sumbangan,
+                                timestamp: Date.now()
+                            });
+                            importCount++;
+                        }
+                    });
+
+                    renderTable(searchInput.value);
+                    if (importCount > 0) {
+                        showToast(`Berhasil mengimpor ${importCount} tamu!`, "success");
+                    } else {
+                        showToast("Tidak ada data tamu yang sesuai format ditemukan.", "error");
+                    }
+                } catch (error) {
+                    console.error("Error importing file:", error);
+                    showToast("Gagal membaca file Excel.", "error");
+                }
+            };
+            
+            reader.readAsArrayBuffer(file);
+            
+            // Kosongkan nilai input file agar file yang sama bisa diunggah lagi nanti
+            event.target.value = '';
         }
 
         // Event Listeners
