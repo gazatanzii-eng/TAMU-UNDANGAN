@@ -1,69 +1,460 @@
-
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Website Tes GitHub</title>
-
+    <title>Buku Tamu Pernikahan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        wedding: {
+                            50: '#fdf8f6',
+                            100: '#f2e8e5',
+                            200: '#eaddd7',
+                            300: '#e0cec7',
+                            400: '#d2bab0',
+                            500: '#a37c6e',
+                            600: '#8c6558',
+                            700: '#735045',
+                            800: '#5c3e35',
+                            900: '#462d25',
+                        }
+                    },
+                    fontFamily: {
+                        serif: ['"Playfair Display"', 'serif'],
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
     <style>
         body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-            background: linear-gradient(135deg, #141e30, #243b55);
-            color: white;
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
+            background-color: #fdf8f6;
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23a37c6e' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
         }
-
-        .container {
-            background: rgba(255,255,255,0.1);
-            padding: 40px;
-            border-radius: 15px;
-            width: 80%;
-            max-width: 400px;
+        
+        /* Toast Animation */
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
         }
-
-        h1 {
-            color: #00ffae;
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
         }
-
-        button {
-            background: #00ffae;
-            border: none;
-            padding: 12px 25px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
+        .toast-enter {
+            animation: slideInRight 0.3s ease-out forwards;
         }
-
-        button:hover {
-            background: #00d995;
+        .toast-exit {
+            animation: fadeOut 0.3s ease-out forwards;
         }
     </style>
 </head>
+<body class="font-sans text-stone-800 antialiased min-h-screen pb-12">
 
-<body>
+    <!-- Landing Page -->
+    <div id="landing-page" class="max-w-4xl mx-auto px-4 py-20 min-h-screen flex flex-col items-center justify-center">
+        <h1 class="font-serif text-4xl md:text-5xl font-bold text-wedding-900 text-center mb-4">Pilih Acara</h1>
+        <p class="text-stone-500 text-center mb-12">Silakan pilih jenis buku tamu untuk memulai pencatatan</p>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+            <!-- Card Pernikahan -->
+            <button onclick="showApp('pernikahan')" class="group bg-white p-8 rounded-2xl shadow-sm border border-wedding-200 hover:shadow-xl hover:border-wedding-400 transition-all text-center flex flex-col items-center">
+                <div class="w-20 h-20 bg-wedding-50 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                    <i class="fa-solid fa-rings text-4xl text-wedding-500"></i>
+                </div>
+                <h2 class="font-serif text-2xl font-bold text-wedding-900 mb-2">Buku Tamu Pernikahan</h2>
+                <p class="text-stone-500 text-sm">Catat kehadiran dan sumbangan tamu undangan pernikahan</p>
+            </button>
 
-    <div class="container">
-        <h1>Website Berhasil!</h1>
-        <p>Selamat! Website HTML kamu berhasil dijalankan.</p>
-        <p id="pesan">GitHub & Vercel Test</p>
-
-        <button onclick="ubahPesan()">
-            Klik Saya
-        </button>
+            <!-- Card Anak -->
+            <button onclick="showApp('anak')" class="group bg-white p-8 rounded-2xl shadow-sm border border-blue-200 hover:shadow-xl hover:border-blue-400 transition-all text-center flex flex-col items-center">
+                <div class="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                    <i class="fa-solid fa-child-reaching text-4xl text-blue-500"></i>
+                </div>
+                <h2 class="font-serif text-2xl font-bold text-blue-900 mb-2">Buku Tamu Anak</h2>
+                <p class="text-stone-500 text-sm">Catat kehadiran dan kado tamu undangan syukuran anak</p>
+            </button>
+        </div>
     </div>
 
-    <script>
-        function ubahPesan() {
-            document.getElementById("pesan").innerHTML =
-                "JavaScript Berhasil Berjalan!";
-        }
-    </script>
+    <!-- Main App Container -->
+    <div id="app-page" class="hidden">
+        
+        <!-- Header -->
+        <header class="bg-white shadow-sm border-b border-wedding-200 sticky top-0 z-10">
+            <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-6 flex items-center justify-between">
+                <button onclick="showLanding()" class="text-stone-500 hover:text-stone-800 transition-colors flex items-center font-medium bg-stone-100 hover:bg-stone-200 px-3 py-2 rounded-lg">
+                    <i class="fa-solid fa-arrow-left mr-2"></i> <span class="hidden sm:inline">Kembali</span>
+                </button>
+                <div class="text-center flex-1">
+                    <h1 id="app-title" class="font-serif text-xl md:text-3xl font-bold text-wedding-800">
+                        <i class="fa-solid fa-rings text-wedding-400 mr-2 text-2xl"></i>
+                        Buku Tamu Pernikahan
+                    </h1>
+                </div>
+                <div class="w-24"></div> <!-- Spacer for centering -->
+            </div>
+        </header>
 
+        <main class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
+            
+            <!-- Summary Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                <div class="bg-white rounded-xl shadow-sm border border-wedding-100 p-4 flex items-center space-x-4">
+                    <div class="p-3 bg-wedding-50 text-wedding-600 rounded-full">
+                        <i class="fa-solid fa-users text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs text-stone-500 uppercase tracking-wider font-semibold">Total Tamu</p>
+                        <p class="text-2xl font-bold text-wedding-900" id="stat-total">0</p>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm border border-emerald-100 p-4 flex items-center space-x-4">
+                    <div class="p-3 bg-emerald-50 text-emerald-600 rounded-full">
+                        <i class="fa-solid fa-wallet text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs text-stone-500 uppercase tracking-wider font-semibold">Total Sumbangan</p>
+                        <p class="text-2xl font-bold text-emerald-700" id="stat-sumbangan">Rp 0</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex flex-col lg:flex-row gap-8">
+                
+                <!-- Form Section -->
+                <div class="w-full lg:w-1/3">
+                    <div class="bg-white rounded-2xl shadow-sm border border-wedding-200 p-6 sticky top-28">
+                        <h2 class="font-serif text-xl font-semibold text-wedding-900 mb-6 flex items-center">
+                            <i class="fa-solid fa-user-plus mr-2 text-wedding-500"></i> Tambah Tamu Baru
+                        </h2>
+                        
+                        <form id="guestForm" class="space-y-5">
+                            <div>
+                                <label for="name" class="block text-sm font-medium text-stone-700 mb-1">Nama Lengkap</label>
+                                <input type="text" id="name" required placeholder="Contoh: Budi Santoso"
+                                    class="w-full px-4 py-2.5 rounded-lg border border-stone-300 focus:ring-2 focus:ring-wedding-400 focus:border-wedding-400 transition-colors outline-none bg-stone-50 focus:bg-white text-sm">
+                            </div>
+
+                            <div>
+                                <label for="alamat" class="block text-sm font-medium text-stone-700 mb-1">Alamat Lengkap</label>
+                                <textarea id="alamat" required placeholder="Contoh: Jl. Sudirman No. 1, Jakarta" rows="3"
+                                    class="w-full px-4 py-2.5 rounded-lg border border-stone-300 focus:ring-2 focus:ring-wedding-400 focus:border-wedding-400 transition-colors outline-none bg-stone-50 focus:bg-white text-sm resize-none"></textarea>
+                            </div>
+
+                            <div>
+                                <label for="sumbangan" class="block text-sm font-medium text-stone-700 mb-1">Jumlah Sumbangan (Rp)</label>
+                                <input type="number" id="sumbangan" required placeholder="Contoh: 100000" min="0"
+                                    class="w-full px-4 py-2.5 rounded-lg border border-stone-300 focus:ring-2 focus:ring-wedding-400 focus:border-wedding-400 transition-colors outline-none bg-stone-50 focus:bg-white text-sm">
+                            </div>
+
+                            <button type="submit" 
+                                class="w-full bg-wedding-600 hover:bg-wedding-700 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 shadow-md flex justify-center items-center mt-4">
+                                <i class="fa-solid fa-save mr-2"></i> Simpan Data Tamu
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- List Section -->
+                <div class="w-full lg:w-2/3">
+                    <div class="bg-white rounded-2xl shadow-sm border border-wedding-200 overflow-hidden flex flex-col h-full">
+                        
+                        <!-- Search Bar -->
+                        <div class="p-6 border-b border-wedding-100 bg-wedding-50/50 flex flex-col sm:flex-row justify-between items-center gap-4">
+                            <h2 class="font-serif text-xl font-semibold text-wedding-900 flex-1">
+                                Daftar Hadir
+                            </h2>
+                            <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                                <div class="relative w-full sm:w-64">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <i class="fa-solid fa-search text-stone-400"></i>
+                                    </div>
+                                    <input type="text" id="searchInput" placeholder="Cari nama / alamat..." 
+                                        class="w-full pl-10 pr-4 py-2 rounded-full border border-stone-200 focus:ring-2 focus:ring-wedding-400 focus:border-wedding-400 outline-none text-sm bg-white shadow-inner">
+                                </div>
+                                <button onclick="exportToExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-full text-sm font-medium transition-colors shadow-sm flex items-center justify-center whitespace-nowrap">
+                                    <i class="fa-solid fa-file-excel mr-2"></i> Export Excel
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Table -->
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-stone-50 text-stone-500 text-xs uppercase tracking-wider border-b border-stone-200">
+                                        <th class="py-4 px-6 font-semibold w-12 text-center">No</th>
+                                        <th class="py-4 px-6 font-semibold">Nama Lengkap</th>
+                                        <th class="py-4 px-6 font-semibold">Alamat</th>
+                                        <th class="py-4 px-6 font-semibold">Sumbangan</th>
+                                        <th class="py-4 px-6 font-semibold text-center">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="guestTableBody" class="divide-y divide-stone-100 text-sm">
+                                    <!-- Data will be injected here via JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- Empty State -->
+                        <div id="emptyState" class="hidden flex-col items-center justify-center py-16 px-4 text-center">
+                            <div class="w-20 h-20 bg-wedding-50 rounded-full flex items-center justify-center mb-4">
+                                <i class="fa-solid fa-book-open-reader text-3xl text-wedding-400"></i>
+                            </div>
+                            <h3 class="text-lg font-serif font-medium text-stone-800 mb-1">Belum ada tamu</h3>
+                            <p class="text-stone-500 text-sm max-w-sm">Data tamu undangan yang Anda tambahkan akan muncul di sini.</p>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-3"></div>
+
+    <script>
+        // Formatter untuk Rupiah
+        const formatRupiah = (angka) => {
+            return new Intl.NumberFormat('id-ID', {
+                style: 'currency',
+                currency: 'IDR',
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            }).format(angka);
+        };
+
+        // State Management
+        let currentEvent = 'pernikahan'; // 'pernikahan' or 'anak'
+        
+        const eventData = {
+            'pernikahan': [
+                { id: 1, name: "Andi Wijaya", alamat: "Jl. Merdeka No. 45, Bandung", sumbangan: 150000, timestamp: Date.now() - 10000 },
+                { id: 2, name: "Bapak Supriyanto & Istri", alamat: "Perum Indah Blok B/2, Jakarta", sumbangan: 500000, timestamp: Date.now() - 20000 }
+            ],
+            'anak': [
+                { id: 3, name: "Tante Sisca", alamat: "Jl. Anggrek 1", sumbangan: 200000, timestamp: Date.now() - 5000 }
+            ]
+        };
+
+        function getActiveGuests() {
+            return eventData[currentEvent];
+        }
+
+        // DOM Elements
+        const form = document.getElementById('guestForm');
+        const searchInput = document.getElementById('searchInput');
+        const tableBody = document.getElementById('guestTableBody');
+        const emptyState = document.getElementById('emptyState');
+        
+        // Stats Elements
+        const statTotal = document.getElementById('stat-total');
+        const statSumbangan = document.getElementById('stat-sumbangan');
+
+        // Navigation Functions
+        function showApp(event) {
+            currentEvent = event;
+            document.getElementById('landing-page').classList.add('hidden');
+            document.getElementById('app-page').classList.remove('hidden');
+
+            const appTitle = document.getElementById('app-title');
+            
+            if (event === 'pernikahan') {
+                appTitle.innerHTML = `<i class="fa-solid fa-rings text-wedding-400 mr-2 text-2xl"></i> Buku Tamu Pernikahan`;
+            } else {
+                appTitle.innerHTML = `<i class="fa-solid fa-child-reaching text-blue-400 mr-2 text-2xl"></i> Buku Tamu Anak`;
+            }
+
+            // Reset form dan pencarian saat ganti halaman
+            searchInput.value = '';
+            form.reset();
+            renderTable();
+        }
+
+        function showLanding() {
+            document.getElementById('app-page').classList.add('hidden');
+            document.getElementById('landing-page').classList.remove('hidden');
+        }
+
+        // Functions
+        function updateStats() {
+            const activeGuests = getActiveGuests();
+            statTotal.innerText = activeGuests.length;
+            const totalSumbangan = activeGuests.reduce((sum, guest) => sum + Number(guest.sumbangan), 0);
+            statSumbangan.innerText = formatRupiah(totalSumbangan);
+        }
+
+        function renderTable(filterText = '') {
+            tableBody.innerHTML = '';
+            const activeGuests = getActiveGuests();
+            
+            const filteredGuests = activeGuests.filter(guest => 
+                guest.name.toLowerCase().includes(filterText.toLowerCase()) || 
+                guest.alamat.toLowerCase().includes(filterText.toLowerCase())
+            );
+
+            // Sort by newest first
+            filteredGuests.sort((a, b) => b.timestamp - a.timestamp);
+
+            if (filteredGuests.length === 0) {
+                emptyState.classList.remove('hidden');
+                emptyState.classList.add('flex');
+                tableBody.parentElement.classList.add('hidden'); // hide table
+            } else {
+                emptyState.classList.add('hidden');
+                emptyState.classList.remove('flex');
+                tableBody.parentElement.classList.remove('hidden'); // show table
+
+                filteredGuests.forEach((guest, index) => {
+                    const tr = document.createElement('tr');
+                    tr.className = 'hover:bg-wedding-50/50 transition-colors group';
+                    
+                    tr.innerHTML = `
+                        <td class="py-4 px-6 text-center text-stone-400 font-medium">${index + 1}</td>
+                        <td class="py-4 px-6 font-medium text-stone-800">${guest.name}</td>
+                        <td class="py-4 px-6 text-stone-600">${guest.alamat}</td>
+                        <td class="py-4 px-6 font-semibold text-emerald-600">${formatRupiah(guest.sumbangan)}</td>
+                        <td class="py-4 px-6 text-center">
+                            <button onclick="deleteGuest(${guest.id}, '${guest.name}')" 
+                                class="text-stone-400 hover:text-rose-600 transition-colors p-2 rounded-full hover:bg-rose-50 focus:outline-none"
+                                title="Hapus Data">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </td>
+                    `;
+                    tableBody.appendChild(tr);
+                });
+            }
+            
+            updateStats();
+        }
+
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            
+            const bgColor = type === 'success' ? 'bg-emerald-600' : 'bg-rose-600';
+            const icon = type === 'success' ? 'fa-check-circle' : 'fa-info-circle';
+
+            toast.className = `toast-enter flex items-center p-4 text-white rounded-xl shadow-lg ${bgColor} min-w-[250px] max-w-sm`;
+            toast.innerHTML = `
+                <i class="fa-solid ${icon} text-xl mr-3"></i>
+                <span class="font-medium text-sm">${message}</span>
+            `;
+
+            container.appendChild(toast);
+
+            // Remove toast after 3 seconds
+            setTimeout(() => {
+                toast.classList.replace('toast-enter', 'toast-exit');
+                setTimeout(() => {
+                    if (container.contains(toast)) {
+                        container.removeChild(toast);
+                    }
+                }, 300); // Wait for exit animation
+            }, 3000);
+        }
+
+        function exportToExcel() {
+            const activeGuests = getActiveGuests();
+
+            if (activeGuests.length === 0) {
+                showToast("Tidak ada data untuk diexport!", "error");
+                return;
+            }
+
+            // Hitung total sumbangan
+            const totalSumbangan = activeGuests.reduce((sum, guest) => sum + Number(guest.sumbangan), 0);
+
+            // Siapkan data untuk excel
+            const exportData = activeGuests.map((guest, index) => ({
+                "No": index + 1,
+                "Nama Lengkap": guest.name,
+                "Alamat Lengkap": guest.alamat,
+                "Sumbangan (Rp)": guest.sumbangan
+            }));
+
+            // Tambahkan baris Total di paling bawah
+            exportData.push({
+                "No": "",
+                "Nama Lengkap": "",
+                "Alamat Lengkap": "TOTAL KESELURUHAN",
+                "Sumbangan (Rp)": totalSumbangan
+            });
+
+            // Buat worksheet dan workbook
+            const ws = XLSX.utils.json_to_sheet(exportData);
+            
+            // Atur lebar kolom agar rapi (!cols)
+            ws['!cols'] = [
+                { wch: 5 },   // Lebar kolom A (No)
+                { wch: 25 },  // Lebar kolom B (Nama)
+                { wch: 40 },  // Lebar kolom C (Alamat)
+                { wch: 20 }   // Lebar kolom D (Sumbangan)
+            ];
+
+            const wb = XLSX.utils.book_new();
+            
+            const sheetName = currentEvent === 'pernikahan' ? "Buku Pernikahan" : "Buku Anak";
+            const fileName = currentEvent === 'pernikahan' ? "Buku_Tamu_Pernikahan.xlsx" : "Buku_Tamu_Anak.xlsx";
+
+            XLSX.utils.book_append_sheet(wb, ws, sheetName);
+
+            // Simpan file
+            XLSX.writeFile(wb, fileName);
+            showToast(`Berhasil mendownload ${fileName}!`, "success");
+        }
+
+        // Event Listeners
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('name').value.trim();
+            const alamat = document.getElementById('alamat').value.trim();
+            const sumbangan = document.getElementById('sumbangan').value;
+
+            if (!name || !alamat || !sumbangan) return;
+
+            const newGuest = {
+                id: Date.now(), // simple unique ID
+                name,
+                alamat,
+                sumbangan: Number(sumbangan),
+                timestamp: Date.now()
+            };
+
+            // Tambahkan ke array yang sedang aktif
+            eventData[currentEvent].push(newGuest);
+            renderTable(searchInput.value);
+            
+            // Reset form
+            form.reset();
+
+            showToast(`${name} berhasil ditambahkan!`, 'success');
+        });
+
+        searchInput.addEventListener('input', function(e) {
+            renderTable(e.target.value);
+        });
+
+        // Global function for inline onclick handler
+        window.deleteGuest = function(id, name) {
+            eventData[currentEvent] = eventData[currentEvent].filter(g => g.id !== id);
+            renderTable(searchInput.value);
+            showToast(`${name} telah dihapus dari daftar.`, 'error');
+        };
+        
+    </script>
 </body>
 </html>
